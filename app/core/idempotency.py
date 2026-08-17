@@ -3,8 +3,9 @@ import json
 from collections.abc import Mapping
 from decimal import Decimal
 from typing import Any
+from uuid import UUID
 
-from app.core.exceptions import ConflictError
+from app.core.exceptions import AppError, ConflictError
 
 
 def _json_default(value: object) -> str:
@@ -21,6 +22,10 @@ def canonical_payload_hash(payload: Mapping[str, Any]) -> str:
 def validate_idempotency_key(value: str | None) -> str:
     if not value or len(value) > 255:
         raise AppError("VALIDATION_FAILED", "Idempotency-Key header is required", 400)
+    try:
+        UUID(value)
+    except ValueError as exc:
+        raise AppError("VALIDATION_FAILED", "Idempotency-Key must be a UUID", 400) from exc
     return value
 
 

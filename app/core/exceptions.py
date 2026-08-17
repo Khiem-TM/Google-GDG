@@ -35,7 +35,9 @@ class ConflictError(AppError):
         super().__init__(code, message, 409)
 
 
-def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
+def app_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    if not isinstance(exc, AppError):
+        raise exc
     request_id = getattr(request.state, "request_id", None)
     return JSONResponse(
         status_code=exc.status_code,

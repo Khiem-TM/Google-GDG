@@ -1,4 +1,4 @@
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 CANONICAL_MASS_UNIT = "g"
 NUTRIENT_PRECISION = Decimal("0.001")
