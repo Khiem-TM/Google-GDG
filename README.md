@@ -15,6 +15,16 @@ uv run uvicorn app.main:app --reload
 
 API được phục vụ tại `/api/v1`; OpenAPI tại `/openapi.json` và `/docs`.
 
+## API demo
+
+- `POST /auth/register`, `POST /auth/login`
+- `GET/PATCH/DELETE /users/me`
+- `GET /foods`, `GET /foods/{id}`; Food mutation yêu cầu JWT admin và `If-Match` khi sửa/xóa.
+- `POST/GET /meals`, `GET/PUT/DELETE /meals/{id}`; mọi mutation Meal cần `Idempotency-Key`, còn update/delete cần `If-Match`.
+
+Food fixture chỉ dùng cho local/test. Tạo tài khoản admin sau migration, sau đó chạy
+`uv run python -m app.scripts.seed_demo_catalog` nếu cần dữ liệu demo.
+
 ## Kiểm tra
 
 ```bash
