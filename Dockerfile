@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock README.md ./
 RUN pip install --no-cache-dir uv && uv venv && uv sync --no-dev
 
 COPY app ./app

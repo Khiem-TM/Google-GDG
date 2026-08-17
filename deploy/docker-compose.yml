@@ -34,6 +34,16 @@ services:
       timeout: 10s
       retries: 20
 
+  migrate:
+    build: ..
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      WELLNESS_DATABASE_URL: postgresql+psycopg://wellness:wellness@postgres:5432/wellness
+      WELLNESS_JWT_SECRET: local-compose-secret-must-be-32-chars
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api:
     build: ..
     environment:
@@ -45,6 +55,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
 
@@ -58,6 +70,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
 
