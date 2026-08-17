@@ -34,3 +34,14 @@ Food fixture chỉ dùng cho local/test. Tạo tài khoản admin sau migration,
 uv run ruff check .
 uv run pytest
 ```
+
+## E2E API
+
+E2E gọi HTTP thật tới một API instance và database **tách biệt**. Không trỏ các biến này
+vào database demo đang dùng:
+
+```bash
+E2E_BASE_URL=http://api:8000 \
+E2E_DATABASE_URL=postgresql+psycopg://wellness:wellness@postgres:5432/wellness_e2e \
+bash scripts/run_e2e_api.sh
+```
