@@ -1,5 +1,3 @@
-from datetime import UTC, datetime
-
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppError, ConflictError
@@ -40,8 +38,7 @@ def update(session: Session, user: User, request: UserUpdate, request_id: str | 
 
 
 def disable(session: Session, user: User, request_id: str | None = None) -> None:
-    user.status = "disabled"
-    user.deleted_at = datetime.now(UTC)
+    user.is_active = False
     user.token_version += 1
     user.version += 1
     crud_audit.record_mutation(

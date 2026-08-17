@@ -7,7 +7,7 @@ from app.models.meal import Meal, MealRevision
 
 
 def get_owned_active(session: Session, meal_id: UUID, subject_id: UUID, *, lock: bool = False) -> Meal | None:
-    statement = select(Meal).where(Meal.id == meal_id, Meal.subject_id == subject_id, Meal.deleted_at.is_(None))
+    statement = select(Meal).where(Meal.id == meal_id, Meal.subject_id == subject_id, Meal.is_active.is_(True))
     if lock:
         statement = statement.with_for_update()
     return session.scalar(statement)
@@ -27,7 +27,7 @@ def list_owned_active(session: Session, subject_id: UUID, limit: int) -> list[tu
                 MealRevision,
                 and_(MealRevision.meal_id == Meal.id, MealRevision.revision_no == Meal.current_revision_no),
             )
-            .where(Meal.subject_id == subject_id, Meal.deleted_at.is_(None))
+            .where(Meal.subject_id == subject_id, Meal.is_active.is_(True))
             .order_by(MealRevision.occurred_at.desc(), Meal.id.desc())
             .limit(limit)
         ).tuples()

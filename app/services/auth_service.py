@@ -27,7 +27,7 @@ def register(session: Session, request: RegisterRequest, request_id: str | None 
 
 def login(session: Session, request: LoginRequest, settings: Settings) -> AccessToken:
     user = crud_user.get_by_email(session, request.email)
-    if user is None or user.status != "active" or user.deleted_at is not None:
+    if user is None or not user.is_active:
         raise AppError("AUTH_REQUIRED", "Invalid email or password", 401)
     if not verify_password(request.password, user.password_hash):
         raise AppError("AUTH_REQUIRED", "Invalid email or password", 401)

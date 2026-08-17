@@ -76,7 +76,7 @@ class ServingRead(Schema):
     display_name: str
     canonical_amount: Decimal
     canonical_unit: str
-    status: str
+    is_active: bool
 
 
 class NutrientRead(Schema):
@@ -92,7 +92,7 @@ class FoodRead(Schema):
     food_kind: str
     basis_amount: Decimal
     basis_unit: str
-    status: str
+    is_active: bool
     source_name: str
     source_version: str
     catalog_version: int

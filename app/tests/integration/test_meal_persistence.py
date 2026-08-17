@@ -9,9 +9,10 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.security import hash_password
+from app.crud import crud_meal
 from app.db.seed import seed_demo_catalog
 from app.models.food import Food
-from app.models.meal import MealRevision
+from app.models.meal import Meal, MealRevision
 from app.models.user import User
 from app.schemas.meal import MealItemInput, MealWrite
 from app.services import meal_service
@@ -46,7 +47,7 @@ def _create_user_and_food(session: Session) -> tuple[User, Food]:
         session.add(user)
         session.flush()
         seed_demo_catalog(session)
-    food = session.query(Food).filter(Food.canonical_name == "Bún chả demo").one()
+        food = session.query(Food).filter(Food.canonical_name == "Bún chả demo").one()
     return user, food
 
 
@@ -81,3 +82,17 @@ def test_BR_MEAL_014_creates_new_immutable_revision(session: Session) -> None:
     assert len(revisions) == 2
     assert created.nutrition_totals["energy_kcal"] == Decimal("740.000")
     assert revised.nutrition_totals["energy_kcal"] == Decimal("370.000")
+
+
+def test_delete_marks_meal_inactive_and_preserves_revision_history(session: Session) -> None:
+    user, food = _create_user_and_food(session)
+    with session.begin():
+        created = meal_service.create(session, user, _payload(food), str(uuid4()))
+    with session.begin():
+        meal_service.delete(session, user, created.id, created.version, str(uuid4()))
+
+    meal = session.get(Meal, created.id)
+    assert meal is not None
+    assert meal.is_active is False
+    assert crud_meal.get_owned_active(session, created.id, user.id) is None
+    assert session.query(MealRevision).filter(MealRevision.meal_id == created.id).count() == 1

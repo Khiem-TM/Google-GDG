@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -25,7 +26,7 @@ class NutrientDefinition(Base):
     code: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(128))
     canonical_unit: Mapped[str] = mapped_column(String(16))
-    status: Mapped[str] = mapped_column(String(32), default="active", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(
@@ -45,7 +46,7 @@ class Food(Base):
     food_kind: Mapped[str] = mapped_column(String(32), default="ingredient", nullable=False)
     basis_amount: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("100"), nullable=False)
     basis_unit: Mapped[str] = mapped_column(String(16), default="g", nullable=False)
-    status: Mapped[str] = mapped_column(String(32), default="active", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     source_name: Mapped[str] = mapped_column(String(128), default="demo_fixture", nullable=False)
     source_version: Mapped[str] = mapped_column(String(64), default="v1", nullable=False)
     catalog_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
@@ -54,7 +55,6 @@ class Food(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
     )
-    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class FoodServing(Base):
@@ -71,7 +71,7 @@ class FoodServing(Base):
     display_name: Mapped[str] = mapped_column(String(128))
     canonical_amount: Mapped[Decimal] = mapped_column(Numeric(18, 6))
     canonical_unit: Mapped[str] = mapped_column(String(16), default="g")
-    status: Mapped[str] = mapped_column(String(32), default="active", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
 
@@ -92,4 +92,5 @@ class FoodNutrient(Base):
     basis_amount: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("100"), nullable=False)
     basis_unit: Mapped[str] = mapped_column(String(16), default="g", nullable=False)
     source_version: Mapped[str] = mapped_column(String(64), default="v1", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

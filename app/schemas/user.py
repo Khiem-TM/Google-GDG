@@ -28,7 +28,7 @@ class UserRead(Schema):
     id: UUID
     email: str
     is_superuser: bool
-    status: str
+    is_active: bool
     version: int
     created_at: datetime
     updated_at: datetime

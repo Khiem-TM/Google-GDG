@@ -22,10 +22,13 @@ def seed_demo_catalog(session: Session) -> None:
             definition = NutrientDefinition(code=code, display_name=name, canonical_unit=unit)
             session.add(definition)
             session.flush()
+        else:
+            definition.is_active = True
         definitions[code] = definition
 
     food = session.scalar(select(Food).where(Food.canonical_name == "Bún chả demo"))
     if food is not None:
+        food.is_active = True
         return
 
     food = Food(

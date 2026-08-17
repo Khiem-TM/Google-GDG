@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC
 from decimal import Decimal
 from typing import Any, cast
 from uuid import UUID
@@ -74,7 +74,7 @@ def to_read(session: Session, meal: Meal) -> MealRead:
         occurred_at=revision.occurred_at,
         timezone=revision.timezone,
         estimated=revision.estimated,
-        deleted=meal.deleted_at is not None,
+        deleted=not meal.is_active,
         items=items,
         nutrition_totals=totals,
     )
@@ -126,7 +126,11 @@ def _populate_revision(session: Session, meal: Meal, revision: MealRevision, req
             session.execute(
                 select(FoodNutrient, NutrientDefinition)
                 .join(NutrientDefinition, NutrientDefinition.id == FoodNutrient.nutrient_definition_id)
-                .where(FoodNutrient.food_id == food.id, NutrientDefinition.status == "active")
+                .where(
+                    FoodNutrient.food_id == food.id,
+                    FoodNutrient.is_active.is_(True),
+                    NutrientDefinition.is_active.is_(True),
+                )
             ).tuples()
         )
         if not nutrient_rows:
@@ -285,7 +289,7 @@ def delete(
         raise NotFoundError("Meal not found")
     if meal.version != expected_version:
         raise ConflictError("VERSION_CONFLICT", "Meal version is stale")
-    meal.deleted_at = datetime.now(UTC)
+    meal.is_active = False
     meal.version += 1
     crud_audit.record_mutation(
         session,

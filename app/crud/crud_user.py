@@ -11,7 +11,7 @@ def get_by_email(session: Session, email: str) -> User | None:
 
 
 def get_active_by_id(session: Session, user_id: UUID) -> User | None:
-    return session.scalar(select(User).where(User.id == user_id, User.status == "active", User.deleted_at.is_(None)))
+    return session.scalar(select(User).where(User.id == user_id, User.is_active.is_(True)))
 
 
 def create(session: Session, user: User) -> User:

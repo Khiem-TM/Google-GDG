@@ -1,8 +1,7 @@
-from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppError, ConflictError, NotFoundError
@@ -29,7 +28,7 @@ def _to_read(session: Session, food: Food) -> FoodRead:
         food_kind=food.food_kind,
         basis_amount=food.basis_amount,
         basis_unit=food.basis_unit,
-        status=food.status,
+        is_active=food.is_active,
         source_name=food.source_name,
         source_version=food.source_version,
         catalog_version=food.catalog_version,
@@ -123,8 +122,7 @@ def update(
             setattr(food, field, value.lower() if field == "basis_unit" else value)
     if request.servings is not None:
         existing_servings = {
-            serving.code: serving
-            for serving in session.scalars(select(FoodServing).where(FoodServing.food_id == food.id))
+            serving.code: serving for serving in session.scalars(select(FoodServing).where(FoodServing.food_id == food.id))
         }
         requested_codes = {serving.code for serving in request.servings}
         for serving in request.servings:
@@ -143,25 +141,42 @@ def update(
                 stored.display_name = serving.display_name
                 stored.canonical_amount = serving.canonical_amount
                 stored.canonical_unit = serving.canonical_unit.lower()
-                stored.status = "active"
+                stored.is_active = True
                 stored.version += 1
         for code, stored in existing_servings.items():
             if code not in requested_codes:
-                stored.status = "inactive"
+                stored.is_active = False
                 stored.version += 1
     if request.nutrients is not None:
-        session.execute(delete(FoodNutrient).where(FoodNutrient.food_id == food.id))
+        existing_nutrients = {
+            nutrient.nutrient_definition_id: nutrient
+            for nutrient in session.scalars(select(FoodNutrient).where(FoodNutrient.food_id == food.id))
+        }
+        requested_definition_ids = set()
         for nutrient in request.nutrients:
-            session.add(
-                FoodNutrient(
-                    food_id=food.id,
-                    nutrient_definition_id=definitions[nutrient.nutrient_code].id,
-                    amount_per_basis=nutrient.amount_per_basis,
-                    basis_amount=food.basis_amount,
-                    basis_unit=food.basis_unit,
-                    source_version=food.source_version,
+            definition = definitions[nutrient.nutrient_code]
+            requested_definition_ids.add(definition.id)
+            stored = existing_nutrients.get(definition.id)
+            if stored is None:
+                session.add(
+                    FoodNutrient(
+                        food_id=food.id,
+                        nutrient_definition_id=definition.id,
+                        amount_per_basis=nutrient.amount_per_basis,
+                        basis_amount=food.basis_amount,
+                        basis_unit=food.basis_unit,
+                        source_version=food.source_version,
+                    )
                 )
-            )
+            else:
+                stored.amount_per_basis = nutrient.amount_per_basis
+                stored.basis_amount = food.basis_amount
+                stored.basis_unit = food.basis_unit
+                stored.source_version = food.source_version
+                stored.is_active = True
+        for definition_id, stored in existing_nutrients.items():
+            if definition_id not in requested_definition_ids:
+                stored.is_active = False
     food.version += 1
     food.catalog_version += 1
     session.flush()
@@ -183,8 +198,11 @@ def deactivate(session: Session, actor: User, food_id: UUID, expected_version: i
         raise NotFoundError("Food not found")
     if food.version != expected_version:
         raise ConflictError("VERSION_CONFLICT", "Food version is stale")
-    food.status = "inactive"
-    food.deleted_at = datetime.now(UTC)
+    food.is_active = False
+    for serving in session.scalars(select(FoodServing).where(FoodServing.food_id == food.id)):
+        serving.is_active = False
+    for nutrient in session.scalars(select(FoodNutrient).where(FoodNutrient.food_id == food.id)):
+        nutrient.is_active = False
     food.version += 1
     crud_audit.record_mutation(
         session,

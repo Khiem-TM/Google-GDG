@@ -23,7 +23,7 @@ def main() -> None:
         else:
             user.password_hash = hash_password(password)
             user.is_superuser = True
-            user.status = "active"
+            user.is_active = True
             user.token_version += 1
 
 

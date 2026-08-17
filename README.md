@@ -22,6 +22,9 @@ API được phục vụ tại `/api/v1`; OpenAPI tại `/openapi.json` và `/do
 - `GET /foods`, `GET /foods/{id}`; Food mutation yêu cầu JWT admin và `If-Match` khi sửa/xóa.
 - `POST/GET /meals`, `GET/PUT/DELETE /meals/{id}`; mọi mutation Meal cần `Idempotency-Key`, còn update/delete cần `If-Match`.
 
+`DELETE` là soft delete: User, Food, FoodServing, FoodNutrient, NutrientDefinition và Meal dùng `is_active=false`.
+Audit event, outbox, idempotency record và Meal revision/snapshot là dữ liệu bất biến, không có delete.
+
 Food fixture chỉ dùng cho local/test. Tạo tài khoản admin sau migration, sau đó chạy
 `uv run python -m app.scripts.seed_demo_catalog` nếu cần dữ liệu demo.
 
